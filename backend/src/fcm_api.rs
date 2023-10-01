@@ -40,28 +40,28 @@ struct ErrorResponse {
 
 /// Create FCMSchedule schema
 #[derive(Debug, Object, Clone, Eq, PartialEq, Serialize)]
-struct FCMSchedule {
+pub struct FCMSchedule {
     #[oai(read_only)]
-    id: i64,
+    pub id: i64,
     #[oai(validator(min_length = 3, max_length = 64))]
-    name: Option<String>,
+    pub name: String,
     #[oai(read_only)]
-    fb_user_id: Option<String>,
-    #[oai(validator(min_length = 32, max_length = 128))]
-    push_token: Option<String>,
+    pub fb_user_id: String,
+    #[oai(validator(min_length = 32, max_length = 512))]
+    pub push_token: String,
     #[oai(read_only)]
-    fb_project_id: Option<String>,
+    pub fb_project_id: String,
     #[oai(validator(min_length = 3, max_length = 64))]
-    cron_pattern: Option<String>,
-    payload: Value,
+    pub cron_pattern: String,
+    pub payload: Value,
     #[oai(read_only)]
-    last_execution: Option<NaiveDateTime>,
+    pub last_execution: NaiveDateTime,
     #[oai(read_only)]
-    next_execution: Option<NaiveDateTime>,
+    pub next_execution: NaiveDateTime,
     #[oai(read_only)]
-    created_at: Option<NaiveDateTime>,
+    pub created_at: NaiveDateTime,
     #[oai(read_only)]
-    updated_at: Option<NaiveDateTime>,
+    pub updated_at: NaiveDateTime,
 }
 
 /// Update Schedule schema
@@ -122,7 +122,10 @@ enum UpdateScheduleResponse {
 }
 
 #[derive(Default)]
-pub struct FCMAPI;
+pub struct FCMAPI {
+    pub projects: Vec<String>,
+}
+
 #[OpenApi]
 impl FCMAPI {
     // create schedule
@@ -144,7 +147,13 @@ impl FCMAPI {
         let fb_user_id = data.user_id;
         let fb_project_id = data.aud;
 
-        let next_execution = match decode_cron(&payload.cron_pattern.as_ref().unwrap()) {
+        if !self.projects.contains(&fb_project_id) {
+            return Ok(CreateScheduleResponse::BadRequest(Json(ErrorResponse {
+                error: "Project not found".to_string(),
+            })));
+        }
+
+        let next_execution = match decode_cron(&payload.cron_pattern.as_ref()) {
             Ok(next) => next,
             Err(e) => {
                 return Ok(CreateScheduleResponse::BadRequest(e));
