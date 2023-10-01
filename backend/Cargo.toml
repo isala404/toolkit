@@ -1,0 +1,24 @@
+[package]
+name = "toolkit"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+color-eyre = "0.6.2"
+poem-openapi = { version = "3", features = ["swagger-ui", "openapi-explorer", "chrono"]}
+tokio = { version = "1", features = ["full"] }
+poem = "1"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+slab = "0.4.4"
+serde = { version = "1", features = ["derive"] }
+sqlx = { version = "0.7", features = [ "runtime-tokio", "tls-rustls", "sqlite", "chrono", "json", "migrate" ] }
+chrono = { version = "0.4", features = ["serde"] }
+serde_json  = { version = "1.0", features = ["raw_value"] }
+cron-parser = "0.8.0"
+jsonwebtoken = "8.3.0"
+dotenv = "0.15.0"
+gcp_auth = "0.9.0"
+reqwest = { version = "0.11", features = ["json"] } # reqwest with JSON parsing support
