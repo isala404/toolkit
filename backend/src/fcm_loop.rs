@@ -163,7 +163,6 @@ pub async fn run_every_minute(
                 }
             };
 
-            
             // Update database
             let result = sqlx::query!(
                 r#"UPDATE fcm_schedule SET next_execution = ?, last_execution = ?, updated_at = ? WHERE id = ?"#,
@@ -172,7 +171,6 @@ pub async fn run_every_minute(
                 current_time,
                 message.id,
             ).execute(pool).await;
-
 
             match result {
                 Ok(data) => println!("Successfully updated next execution time: {:?}, rows affected: {}", next, data.rows_affected()),

@@ -12,7 +12,8 @@ env:
   DOCKER_BUILDKIT: 1
 
 jobs:
-  build:
+  build-publish:
+    permissions: write-all
     runs-on: ubuntu-latest
     defaults:
       run:
