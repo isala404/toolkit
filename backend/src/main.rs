@@ -12,6 +12,7 @@ use tracing::Level;
 use utils::get_db_pool;
 
 mod fcm;
+mod health;
 mod utils;
 
 #[tokio::main]
@@ -22,11 +23,13 @@ async fn main() -> Result<(), std::io::Error> {
     dotenv().ok(); // This line loads the environment variables from the ".env" file.
     let pool = get_db_pool().await;
     let hostname = utils::get_host();
+    let port = utils::get_port();
 
     let fcm_api = fcm_api(pool.clone()).await;
+    let health_api = health::health_checks(pool.clone()).await;
 
-    let api_service = OpenApiService::new(fcm_api, "ToolKit", "1.0")
-        .server(format!("http://{}/api/v1", hostname));
+    let api_service = OpenApiService::new((fcm_api, health_api), "ToolKit", "1.0")
+        .server(format!("{}/api/v1", hostname));
     let ui = api_service.swagger_ui().with(utils::BasicAuth::default());
     let spec = api_service
         .spec_endpoint_yaml()
@@ -40,7 +43,7 @@ async fn main() -> Result<(), std::io::Error> {
         .with(Tracing)
         .data(pool.clone());
 
-    Server::new(TcpListener::bind("127.0.0.1:3000"))
+    Server::new(TcpListener::bind(format!("0.0.0.0:{}", port)))
         .run_with_graceful_shutdown(
             route,
             async move {

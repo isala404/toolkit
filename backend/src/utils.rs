@@ -18,6 +18,8 @@ use std::{future::Future, path::Path};
 pub enum ApiTags {
     /// Scheduled firebase messageing service
     FirebaseMessaging,
+    /// Health check endpoints
+    HealthCheck,
 }
 
 async fn connect(filename: impl AsRef<Path>) -> impl Future<Output = Result<SqlitePool, Error>> {
@@ -44,6 +46,11 @@ pub async fn get_db_pool() -> SqlitePool {
 pub fn get_host() -> String {
     let host = env::var("HOST").expect("HOST must be set");
     return host;
+}
+
+pub fn get_port() -> String {
+    let port = env::var("PORT").unwrap_or("3000".to_string());
+    return port;
 }
 
 #[derive(Object)]
