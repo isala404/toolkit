@@ -20,6 +20,8 @@ pub enum ApiTags {
     FirebaseMessaging,
     /// Health check endpoints
     HealthCheck,
+    /// Browser automation
+    Selenium,
 }
 
 async fn connect(filename: impl AsRef<Path>) -> impl Future<Output = Result<SqlitePool, Error>> {
