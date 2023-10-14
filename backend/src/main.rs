@@ -14,6 +14,7 @@ use utils::get_db_pool;
 mod fcm;
 mod health;
 mod utils;
+mod browser;
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
@@ -27,8 +28,9 @@ async fn main() -> Result<(), std::io::Error> {
 
     let fcm_api = fcm_api(pool.clone()).await;
     let health_api = health::health_checks(pool.clone()).await;
+    let browser_api = browser::selenium().await;
 
-    let api_service = OpenApiService::new((fcm_api, health_api), "ToolKit", "1.0")
+    let api_service = OpenApiService::new((fcm_api, browser_api, health_api), "ToolKit", "1.0")
         .server(format!("{}/api/v1", hostname));
     let ui = api_service.swagger_ui().with(utils::BasicAuth::default());
     let spec = api_service

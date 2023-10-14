@@ -6,7 +6,7 @@ use crate::utils::ApiTags;
 pub struct HealthCheck;
 
 #[OpenApi(
-    prefix_path = "/healthz/",
+    prefix_path = "/health/",
     tag = "ApiTags::HealthCheck",
 )]
 impl HealthCheck {

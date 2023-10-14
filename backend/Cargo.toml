@@ -23,3 +23,4 @@ dotenv = "0.15.0"
 gcp_auth = "0.9.0"
 reqwest = { version = "0.11", features = ["json"] } # reqwest with JSON parsing support
 openssl = { version = "0.10", features = ["vendored"] }
+thirtyfour = "0.31.0"
