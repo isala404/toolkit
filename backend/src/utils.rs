@@ -21,7 +21,7 @@ pub enum ApiTags {
     /// Health check endpoints
     HealthCheck,
     /// Browser automation
-    Selenium
+    Selenium,
 }
 
 async fn connect(filename: impl AsRef<Path>) -> impl Future<Output = Result<SqlitePool, Error>> {
