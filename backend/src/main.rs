@@ -15,6 +15,7 @@ mod browser;
 mod fcm;
 mod health;
 mod utils;
+mod yt_dlp;
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
@@ -29,9 +30,14 @@ async fn main() -> Result<(), std::io::Error> {
     let fcm_api = fcm_api(pool.clone()).await;
     let health_api = health::health_checks(pool.clone()).await;
     let (browser_api, driver) = browser::selenium().await;
+    let yt_dlp_api = yt_dlp::yt_dlp().await;
 
-    let api_service = OpenApiService::new((fcm_api, browser_api, health_api), "ToolKit", "1.0")
-        .server(format!("{}/api/v1", hostname));
+    let api_service = OpenApiService::new(
+        (fcm_api, browser_api, health_api, yt_dlp_api),
+        "ToolKit",
+        "1.0",
+    )
+    .server(format!("{}/api/v1", hostname));
     let ui = api_service.swagger_ui().with(utils::BasicAuth::default());
     let spec = api_service
         .spec_endpoint_yaml()

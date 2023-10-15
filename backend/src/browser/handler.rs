@@ -1,5 +1,5 @@
 use super::model::Image;
-use crate::utils::{ApiTags, MyResponse, ResponseObject};
+use crate::utils::{verify_apikey, ApiTags, MyResponse, ResponseObject};
 use base64::{engine::general_purpose, Engine as _};
 use poem::Request;
 use poem_openapi::{param::Query, OpenApi};
@@ -9,7 +9,6 @@ use tracing::error;
 
 pub struct Selenium {
     driver: Mutex<WebDriver>,
-    api_key: String,
 }
 
 #[OpenApi(
@@ -19,8 +18,8 @@ pub struct Selenium {
 )]
 impl Selenium {
     // create new instance
-    pub fn new(driver: Mutex<WebDriver>, api_key: String) -> Self {
-        Selenium { driver, api_key }
+    pub fn new(driver: Mutex<WebDriver>) -> Self {
+        Selenium { driver }
     }
 
     /// get rendered html
@@ -35,7 +34,7 @@ impl Selenium {
     ) -> MyResponse<String> {
         let driver = self.driver.lock().await;
 
-        match self.verify_apikey(req).await {
+        match verify_apikey(req).await {
             Ok(_) => (),
             Err(e) => {
                 return ResponseObject::unauthorized(e);
@@ -82,7 +81,7 @@ impl Selenium {
     ) -> MyResponse<String> {
         let driver = self.driver.lock().await;
 
-        match self.verify_apikey(req).await {
+        match verify_apikey(req).await {
             Ok(_) => (),
             Err(e) => {
                 return ResponseObject::unauthorized(e);
@@ -141,7 +140,7 @@ impl Selenium {
     ) -> MyResponse<String> {
         let driver = self.driver.lock().await;
 
-        match self.verify_apikey(req).await {
+        match verify_apikey(req).await {
             Ok(_) => (),
             Err(e) => {
                 return ResponseObject::unauthorized(e);
@@ -195,7 +194,7 @@ impl Selenium {
     ) -> MyResponse<Vec<Image>> {
         let driver = self.driver.lock().await;
 
-        match self.verify_apikey(req).await {
+        match verify_apikey(req).await {
             Ok(_) => (),
             Err(e) => {
                 return ResponseObject::unauthorized(e);
@@ -287,22 +286,6 @@ impl Selenium {
         images_vec.sort_by(|a, b| b.size.partial_cmp(&a.size).unwrap());
 
         return ResponseObject::ok(images_vec);
-    }
-
-    async fn verify_apikey(&self, req: &Request) -> Result<(), String> {
-        // extract user id from token
-        let api_key = match req.header("API-Key") {
-            Some(key) => key,
-            None => {
-                return Err("API-Key header is missing".to_string());
-            }
-        };
-
-        if api_key != self.api_key {
-            return Err("Invalid API-Key".to_string());
-        }
-
-        return Ok(());
     }
 
     async fn setup_driver<'a>(
