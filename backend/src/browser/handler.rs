@@ -1,3 +1,4 @@
+use super::model::Image;
 use crate::utils::{ApiTags, MyResponse, ResponseObject};
 use base64::{engine::general_purpose, Engine as _};
 use poem::Request;
@@ -5,7 +6,6 @@ use poem_openapi::{param::Query, OpenApi};
 use thirtyfour::prelude::*;
 use tokio::sync::{Mutex, MutexGuard};
 use tracing::error;
-use super::model::Image;
 
 pub struct Selenium {
     driver: Mutex<WebDriver>,
@@ -30,6 +30,8 @@ impl Selenium {
         req: &Request,
         /// url of the page to render
         url: Query<String>,
+        /// delay in milliseconds wait for the page to be fully loaded
+        delay: Query<u64>,
     ) -> MyResponse<String> {
         let driver = self.driver.lock().await;
 
@@ -47,6 +49,7 @@ impl Selenium {
                 return ResponseObject::internal_server_error("Failed to setup driver");
             }
         };
+        tokio::time::sleep(tokio::time::Duration::from_millis(delay.0)).await;
 
         let html = match driver.source().await {
             Ok(h) => h,
@@ -74,6 +77,8 @@ impl Selenium {
         req: &Request,
         /// url of the page to render
         url: Query<String>,
+        /// delay in milliseconds wait for the page to be fully loaded
+        delay: Query<u64>,
     ) -> MyResponse<String> {
         let driver = self.driver.lock().await;
 
@@ -91,6 +96,7 @@ impl Selenium {
                 return ResponseObject::internal_server_error("Failed to setup driver");
             }
         };
+        tokio::time::sleep(tokio::time::Duration::from_millis(delay.0)).await;
 
         let body = match driver.find(By::Tag("body")).await {
             Ok(h) => h,
@@ -130,6 +136,8 @@ impl Selenium {
         req: &Request,
         /// url of the page to render
         url: Query<String>,
+        /// delay in milliseconds wait for the page to be fully loaded
+        delay: Query<u64>,
     ) -> MyResponse<String> {
         let driver = self.driver.lock().await;
 
@@ -147,6 +155,7 @@ impl Selenium {
                 return ResponseObject::internal_server_error("Failed to setup driver");
             }
         };
+        tokio::time::sleep(tokio::time::Duration::from_millis(delay.0)).await;
 
         let screenshot = match driver.screenshot_as_png().await {
             Ok(h) => h,
@@ -181,6 +190,8 @@ impl Selenium {
         req: &Request,
         /// url of the page to render
         url: Query<String>,
+        /// delay in milliseconds wait for the page to be fully loaded
+        delay: Query<u64>,
     ) -> MyResponse<Vec<Image>> {
         let driver = self.driver.lock().await;
 
@@ -198,6 +209,7 @@ impl Selenium {
                 return ResponseObject::internal_server_error("Failed to setup driver");
             }
         };
+        tokio::time::sleep(tokio::time::Duration::from_millis(delay.0)).await;
 
         let images = match driver.find_all(By::Tag("img")).await {
             Ok(h) => h,
@@ -211,7 +223,6 @@ impl Selenium {
 
         let mut images_vec = Vec::new();
 
-        
         for image in images {
             let src = match image.attr("src").await {
                 Ok(s) => s,
@@ -278,7 +289,6 @@ impl Selenium {
         return ResponseObject::ok(images_vec);
     }
 
-
     async fn verify_apikey(&self, req: &Request) -> Result<(), String> {
         // extract user id from token
         let api_key = match req.header("API-Key") {
@@ -331,9 +341,6 @@ impl Selenium {
             Ok(_) => (),
             Err(_) => (),
         }
-
-        // sleep for 1000ms for the page to be fully loaded
-        tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
 
         return Ok(driver);
     }

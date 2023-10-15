@@ -7,7 +7,6 @@ mod handler;
 mod model;
 
 pub async fn selenium() -> (handler::Selenium, WebDriver) {
-
     let api_key = env::var("API_KEY").expect("API_KEY must be set");
 
     let caps = DesiredCapabilities::chrome();
