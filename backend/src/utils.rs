@@ -7,7 +7,7 @@ use poem::{
 };
 use poem_openapi::{
     error::ParseRequestPayloadError,
-    payload::{Attachment, Json},
+    payload::Json,
     types::{ParseFromJSON, ToJSON},
     {ApiResponse, Object, Tags},
 };
@@ -69,47 +69,43 @@ pub struct ResponseObject<T: ParseFromJSON + ToJSON + Send + Sync> {
 }
 
 impl<T: ParseFromJSON + ToJSON + Send + Sync> ResponseObject<T> {
-    pub fn ok(data: T) -> MyResponse<T> {
-        MyResponse::Ok(Json(ResponseObject {
+    pub fn ok(data: T) -> JsonSuccess<T> {
+        JsonSuccess::Ok(Json(ResponseObject {
             data: Some(data),
             error: None,
         }))
     }
 
-    pub fn created(data: T) -> MyResponse<T> {
-        MyResponse::Created(Json(ResponseObject {
+    pub fn created(data: T) -> JsonSuccess<T> {
+        JsonSuccess::Created(Json(ResponseObject {
             data: Some(data),
             error: None,
         }))
     }
 
-    pub fn file_response(data: Attachment<Vec<u8>>) -> MyResponse<T> {
-        MyResponse::FileResponse(data)
-    }
-
-    pub fn bad_request(error: impl ToString) -> MyResponse<T> {
-        MyResponse::BadRequest(Json(ResponseObject {
+    pub fn bad_request(error: impl ToString) -> JsonError<T> {
+        JsonError::BadRequest(Json(ResponseObject {
             data: None,
             error: Some(error.to_string()),
         }))
     }
 
-    pub fn unauthorized(error: impl ToString) -> MyResponse<T> {
-        MyResponse::Unauthorized(Json(ResponseObject {
+    pub fn unauthorized(error: impl ToString) -> JsonError<T> {
+        JsonError::Unauthorized(Json(ResponseObject {
             data: None,
             error: Some(error.to_string()),
         }))
     }
 
-    pub fn not_found(error: impl ToString) -> MyResponse<T> {
-        MyResponse::NotFound(Json(ResponseObject {
+    pub fn not_found(error: impl ToString) -> JsonError<T> {
+        JsonError::NotFound(Json(ResponseObject {
             data: None,
             error: Some(error.to_string()),
         }))
     }
 
-    pub fn internal_server_error(error: impl ToString) -> MyResponse<T> {
-        MyResponse::InternalServerError(Json(ResponseObject {
+    pub fn internal_server_error(error: impl ToString) -> JsonError<T> {
+        JsonError::InternalServerError(Json(ResponseObject {
             data: None,
             error: Some(error.to_string()),
         }))
@@ -117,14 +113,16 @@ impl<T: ParseFromJSON + ToJSON + Send + Sync> ResponseObject<T> {
 }
 
 #[derive(ApiResponse)]
-#[oai(bad_request_handler = "bad_request_handler")]
-pub enum MyResponse<T: ParseFromJSON + ToJSON + Send + Sync> {
+pub enum JsonSuccess<T: ParseFromJSON + ToJSON + Send + Sync> {
     #[oai(status = 200)]
     Ok(Json<ResponseObject<T>>),
-    #[oai(status = 200)]
-    FileResponse(Attachment<Vec<u8>>),
     #[oai(status = 201)]
     Created(Json<ResponseObject<T>>),
+}
+
+#[derive(ApiResponse)]
+#[oai(bad_request_handler = "bad_request_handler")]
+pub enum JsonError<T: ParseFromJSON + ToJSON + Send + Sync> {
     #[oai(status = 400)]
     BadRequest(Json<ResponseObject<T>>),
     #[oai(status = 401)]
@@ -135,14 +133,14 @@ pub enum MyResponse<T: ParseFromJSON + ToJSON + Send + Sync> {
     InternalServerError(Json<ResponseObject<T>>),
 }
 
-fn bad_request_handler<T: ParseFromJSON + ToJSON + Send + Sync>(err: PoemError) -> MyResponse<T> {
+fn bad_request_handler<T: ParseFromJSON + ToJSON + Send + Sync>(err: PoemError) -> JsonError<T> {
     if err.is::<ParseRequestPayloadError>() {
-        MyResponse::BadRequest(Json(ResponseObject {
+        JsonError::BadRequest(Json(ResponseObject {
             data: None,
             error: Some(err.to_string()),
         }))
     } else {
-        MyResponse::InternalServerError(Json(ResponseObject {
+        JsonError::InternalServerError(Json(ResponseObject {
             data: None,
             error: Some(err.to_string()),
         }))

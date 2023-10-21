@@ -1,7 +1,7 @@
 use super::model::Image;
-use crate::utils::{verify_apikey, ApiTags, MyResponse, ResponseObject};
+use crate::utils::{verify_apikey, ApiTags, JsonError, JsonSuccess, ResponseObject};
 use base64::{engine::general_purpose, Engine as _};
-use poem::Request;
+use poem::{Request, Result};
 use poem_openapi::{param::Query, OpenApi};
 use thirtyfour::prelude::*;
 use tokio::sync::{Mutex, MutexGuard};
@@ -31,13 +31,13 @@ impl Selenium {
         url: Query<String>,
         /// delay in milliseconds wait for the page to be fully loaded
         delay: Query<u64>,
-    ) -> MyResponse<String> {
+    ) -> Result<JsonSuccess<String>, JsonError<String>> {
         let driver = self.driver.lock().await;
 
         match verify_apikey(req).await {
             Ok(_) => (),
             Err(e) => {
-                return ResponseObject::unauthorized(e);
+                return Err(ResponseObject::unauthorized(e));
             }
         }
 
@@ -45,7 +45,9 @@ impl Selenium {
             Ok(d) => d,
             Err(e) => {
                 error!(url=?*url, error=?e, "Failed to setup driver");
-                return ResponseObject::internal_server_error("Failed to setup driver");
+                return Err(ResponseObject::internal_server_error(
+                    "Failed to setup driver",
+                ));
             }
         };
         tokio::time::sleep(tokio::time::Duration::from_millis(delay.0)).await;
@@ -54,7 +56,9 @@ impl Selenium {
             Ok(h) => h,
             Err(e) => {
                 error!(url=?*url, error=?e, "Failed to get page source");
-                return ResponseObject::internal_server_error("Failed to get page source");
+                return Err(ResponseObject::internal_server_error(
+                    "Failed to get page source",
+                ));
             }
         };
 
@@ -62,11 +66,13 @@ impl Selenium {
             Ok(_) => (),
             Err(e) => {
                 error!(url=?*url, error=?e, "Failed to cleanup driver");
-                return ResponseObject::internal_server_error("Failed to cleanup driver");
+                return Err(ResponseObject::internal_server_error(
+                    "Failed to cleanup driver",
+                ));
             }
         }
 
-        return ResponseObject::ok(html);
+        return Ok(ResponseObject::ok(html));
     }
 
     /// get body text of the rendered page
@@ -78,13 +84,13 @@ impl Selenium {
         url: Query<String>,
         /// delay in milliseconds wait for the page to be fully loaded
         delay: Query<u64>,
-    ) -> MyResponse<String> {
+    ) -> Result<JsonSuccess<String>, JsonError<String>> {
         let driver = self.driver.lock().await;
 
         match verify_apikey(req).await {
             Ok(_) => (),
             Err(e) => {
-                return ResponseObject::unauthorized(e);
+                return Err(ResponseObject::unauthorized(e));
             }
         }
 
@@ -92,7 +98,9 @@ impl Selenium {
             Ok(d) => d,
             Err(e) => {
                 error!(url=?*url, error=?e, "Failed to setup driver");
-                return ResponseObject::internal_server_error("Failed to setup driver");
+                return Err(ResponseObject::internal_server_error(
+                    "Failed to setup driver",
+                ));
             }
         };
         tokio::time::sleep(tokio::time::Duration::from_millis(delay.0)).await;
@@ -101,7 +109,9 @@ impl Selenium {
             Ok(h) => h,
             Err(e) => {
                 error!(url=?*url, error=?e, "Failed to get the body of the page");
-                return ResponseObject::internal_server_error("Failed to get the body of the page");
+                return Err(ResponseObject::internal_server_error(
+                    "Failed to get the body of the page",
+                ));
             }
         };
 
@@ -109,7 +119,9 @@ impl Selenium {
             Ok(t) => t,
             Err(e) => {
                 error!(url=?*url, error=?e, "Failed to get the text of the body");
-                return ResponseObject::internal_server_error("Failed to get the text of the body");
+                return Err(ResponseObject::internal_server_error(
+                    "Failed to get the text of the body",
+                ));
             }
         };
 
@@ -117,11 +129,13 @@ impl Selenium {
             Ok(_) => (),
             Err(e) => {
                 error!(url=?*url, error=?e, "Failed to cleanup driver");
-                return ResponseObject::internal_server_error("Failed to cleanup driver");
+                return Err(ResponseObject::internal_server_error(
+                    "Failed to cleanup driver",
+                ));
             }
         }
 
-        return ResponseObject::ok(text);
+        return Ok(ResponseObject::ok(text));
     }
 
     /// get screenshot of the rendered page
@@ -137,13 +151,13 @@ impl Selenium {
         url: Query<String>,
         /// delay in milliseconds wait for the page to be fully loaded
         delay: Query<u64>,
-    ) -> MyResponse<String> {
+    ) -> Result<JsonSuccess<String>, JsonError<Option<String>>> {
         let driver = self.driver.lock().await;
 
         match verify_apikey(req).await {
             Ok(_) => (),
             Err(e) => {
-                return ResponseObject::unauthorized(e);
+                return Err(ResponseObject::unauthorized(e));
             }
         }
 
@@ -151,7 +165,9 @@ impl Selenium {
             Ok(d) => d,
             Err(e) => {
                 error!(url=?*url, error=?e, "Failed to setup driver");
-                return ResponseObject::internal_server_error("Failed to setup driver");
+                return Err(ResponseObject::internal_server_error(
+                    "Failed to setup driver",
+                ));
             }
         };
         tokio::time::sleep(tokio::time::Duration::from_millis(delay.0)).await;
@@ -160,9 +176,9 @@ impl Selenium {
             Ok(h) => h,
             Err(e) => {
                 error!(url=?*url, error=?e, "Failed to get the screenshot of the page");
-                return ResponseObject::internal_server_error(
+                return Err(ResponseObject::internal_server_error(
                     "Failed to get the screenshot of the page",
-                );
+                ));
             }
         };
         let b64 = general_purpose::STANDARD.encode(screenshot);
@@ -171,11 +187,13 @@ impl Selenium {
             Ok(_) => (),
             Err(e) => {
                 error!(url=?*url, error=?e, "Failed to cleanup driver");
-                return ResponseObject::internal_server_error("Failed to cleanup driver");
+                return Err(ResponseObject::internal_server_error(
+                    "Failed to cleanup driver",
+                ));
             }
         }
 
-        return ResponseObject::ok(format!("data:image/png;base64,{}", b64));
+        return Ok(ResponseObject::ok(format!("data:image/png;base64,{}", b64)));
     }
 
     /// get list of images in the rendered page
@@ -191,13 +209,13 @@ impl Selenium {
         url: Query<String>,
         /// delay in milliseconds wait for the page to be fully loaded
         delay: Query<u64>,
-    ) -> MyResponse<Vec<Image>> {
+    ) -> Result<JsonSuccess<Vec<Image>>, JsonError<String>> {
         let driver = self.driver.lock().await;
 
         match verify_apikey(req).await {
             Ok(_) => (),
             Err(e) => {
-                return ResponseObject::unauthorized(e);
+                return Err(ResponseObject::unauthorized(e));
             }
         }
 
@@ -205,7 +223,9 @@ impl Selenium {
             Ok(d) => d,
             Err(e) => {
                 error!(url=?*url, error=?e, "Failed to setup driver");
-                return ResponseObject::internal_server_error("Failed to setup driver");
+                return Err(ResponseObject::internal_server_error(
+                    "Failed to setup driver",
+                ));
             }
         };
         tokio::time::sleep(tokio::time::Duration::from_millis(delay.0)).await;
@@ -214,9 +234,9 @@ impl Selenium {
             Ok(h) => h,
             Err(e) => {
                 error!(url=?*url, error=?e, "Failed to get the images of the page");
-                return ResponseObject::internal_server_error(
+                return Err(ResponseObject::internal_server_error(
                     "Failed to get the images of the page",
-                );
+                ));
             }
         };
 
@@ -227,18 +247,18 @@ impl Selenium {
                 Ok(s) => s,
                 Err(e) => {
                     error!(url=?*url, error=?e, "Failed to get the src of the image");
-                    return ResponseObject::internal_server_error(
+                    return Err(ResponseObject::internal_server_error(
                         "Failed to get the src of the image",
-                    );
+                    ));
                 }
             };
             let alt = match image.attr("alt").await {
                 Ok(s) => s,
                 Err(e) => {
                     error!(url=?*url, error=?e, "Failed to get the alt of the image");
-                    return ResponseObject::internal_server_error(
+                    return Err(ResponseObject::internal_server_error(
                         "Failed to get the alt of the image",
-                    );
+                    ));
                 }
             };
 
@@ -250,9 +270,9 @@ impl Selenium {
                 Ok(r) => r.width,
                 Err(e) => {
                     error!(url=?*url, error=?e, "Failed to get the width of the image");
-                    return ResponseObject::internal_server_error(
+                    return Err(ResponseObject::internal_server_error(
                         "Failed to get the width of the image",
-                    );
+                    ));
                 }
             };
 
@@ -260,9 +280,9 @@ impl Selenium {
                 Ok(r) => r.height,
                 Err(e) => {
                     error!(url=?*url, error=?e, "Failed to get the height of the image");
-                    return ResponseObject::internal_server_error(
+                    return Err(ResponseObject::internal_server_error(
                         "Failed to get the height of the image",
-                    );
+                    ));
                 }
             };
             images_vec.push(Image {
@@ -278,14 +298,16 @@ impl Selenium {
             Ok(_) => (),
             Err(e) => {
                 error!(url=?*url, error=?e, "Failed to cleanup driver");
-                return ResponseObject::internal_server_error("Failed to cleanup driver");
+                return Err(ResponseObject::internal_server_error(
+                    "Failed to cleanup driver",
+                ));
             }
         }
 
         // sort images by size
         images_vec.sort_by(|a, b| b.size.partial_cmp(&a.size).unwrap());
 
-        return ResponseObject::ok(images_vec);
+        return Ok(ResponseObject::ok(images_vec));
     }
 
     async fn setup_driver<'a>(

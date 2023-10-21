@@ -1,5 +1,5 @@
 use super::model::Metadata;
-use crate::utils::{verify_apikey, ApiTags, MyResponse, ResponseObject};
+use crate::utils::{verify_apikey, ApiTags, JsonError, JsonSuccess, ResponseObject};
 use poem::Request;
 use poem_openapi::{
     param::Query,
@@ -24,11 +24,15 @@ impl YoutubeDL {
         method = "get",
         operation_id = "yt_dlp::get_metadata"
     )]
-    async fn get_metadata(&self, req: &Request, url: Query<String>) -> MyResponse<Metadata> {
+    async fn get_metadata(
+        &self,
+        req: &Request,
+        url: Query<String>,
+    ) -> Result<JsonSuccess<Metadata>, JsonError<String>> {
         match verify_apikey(req).await {
             Ok(_) => (),
             Err(e) => {
-                return ResponseObject::unauthorized(e);
+                return Err(ResponseObject::unauthorized(e));
             }
         }
 
@@ -42,9 +46,11 @@ impl YoutubeDL {
             Err(error) => {
                 error!(url = %url.0, error = %error, "Failed to get metadata");
                 if error.to_string().contains("ERROR: Unsupported URL") {
-                    return ResponseObject::bad_request("Unsupported URL".to_string());
+                    return Err(ResponseObject::bad_request("Unsupported URL".to_string()));
                 }
-                return ResponseObject::internal_server_error("Failed to get metadata".to_string());
+                return Err(ResponseObject::internal_server_error(
+                    "Failed to get metadata".to_string(),
+                ));
             }
         };
 
@@ -52,11 +58,13 @@ impl YoutubeDL {
             Some(video) => video,
             None => {
                 error!(url = %url.0, "Failed to get metadata");
-                return ResponseObject::internal_server_error("Failed to get metadata".to_string());
+                return Err(ResponseObject::bad_request(
+                    "Failed to get metadata".to_string(),
+                ));
             }
         };
 
-        ResponseObject::ok(Metadata {
+        Ok(ResponseObject::ok(Metadata {
             description: video.description,
             duration: video.duration,
             extractor: video.extractor,
@@ -66,7 +74,7 @@ impl YoutubeDL {
             upload_date: video.upload_date,
             url: video.url,
             webpage_url: video.webpage_url,
-        })
+        }))
     }
 
     #[oai(path = "/download", method = "get", operation_id = "yt_dlp::download")]
@@ -75,11 +83,12 @@ impl YoutubeDL {
         req: &Request,
         url: Query<String>,
         format: Query<String>,
-    ) -> MyResponse<String> {
+    ) -> Result<Attachment<Vec<u8>>, JsonError<String>> {
+        // Attachment<Vec<u8>>
         match verify_apikey(req).await {
             Ok(_) => (),
             Err(e) => {
-                return ResponseObject::unauthorized(e);
+                return Err(ResponseObject::unauthorized(e));
             }
         }
 
@@ -87,9 +96,9 @@ impl YoutubeDL {
             Ok(temp_dir) => temp_dir,
             Err(error) => {
                 error!(url = %url.0, error = %error, "Failed to get download directory");
-                return ResponseObject::internal_server_error(
+                return Err(ResponseObject::internal_server_error(
                     "Failed to get download directory".to_string(),
-                );
+                ));
             }
         };
 
@@ -106,9 +115,11 @@ impl YoutubeDL {
             Err(error) => {
                 error!(url = %url.0, error = %error, "Failed to get metadata");
                 if error.to_string().contains("ERROR: Unsupported URL") {
-                    return ResponseObject::bad_request("Unsupported URL".to_string());
+                    return Err(ResponseObject::bad_request("Unsupported URL".to_string()));
                 }
-                return ResponseObject::internal_server_error("Failed to get metadata".to_string());
+                return Err(ResponseObject::internal_server_error(
+                    "Failed to get metadata".to_string(),
+                ));
             }
         };
 
@@ -117,9 +128,9 @@ impl YoutubeDL {
             Ok(files) => files,
             Err(error) => {
                 error!(url = %url.0, error = %error, "Failed to get download directory");
-                return ResponseObject::internal_server_error(
+                return Err(ResponseObject::internal_server_error(
                     "Failed to get download directory".to_string(),
-                );
+                ));
             }
         };
 
@@ -128,9 +139,9 @@ impl YoutubeDL {
             Some(file) => file,
             None => {
                 error!(url = %url.0, "Failed to get download directory");
-                return ResponseObject::internal_server_error(
+                return Err(ResponseObject::bad_request(
                     "Failed to get download directory".to_string(),
-                );
+                ));
             }
         };
 
@@ -138,9 +149,9 @@ impl YoutubeDL {
             Ok(file) => file,
             Err(error) => {
                 error!(url = %url.0, error = %error, "Failed to get download directory");
-                return ResponseObject::internal_server_error(
+                return Err(ResponseObject::internal_server_error(
                     "Failed to get download directory".to_string(),
-                );
+                ));
             }
         };
 
@@ -149,9 +160,9 @@ impl YoutubeDL {
             Ok(file_contents) => file_contents,
             Err(error) => {
                 error!(url = %url.0, error = %error, "Failed to get download directory");
-                return ResponseObject::internal_server_error(
+                return Err(ResponseObject::internal_server_error(
                     "Failed to get download directory".to_string(),
-                );
+                ));
             }
         };
 
@@ -159,6 +170,8 @@ impl YoutubeDL {
             .attachment_type(AttachmentType::Attachment)
             .filename(file.file_name().to_str().unwrap().to_string());
 
-        ResponseObject::file_response(attachment)
+        // Ok(ResponseObject::ok(attachment))
+        // Ok(ResponseObject::ok("".to_string()))
+        Ok(attachment)
     }
 }
