@@ -17,6 +17,8 @@ use std::{future::Future, path::Path};
 
 lazy_static! {
     static ref API_KEY: String = env::var("API_KEY").expect("API_KEY must be set");
+    pub static ref OPENAI_API_KEY: String =
+        env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY must be set");
 }
 
 #[derive(Tags)]
