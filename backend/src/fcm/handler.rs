@@ -1,6 +1,6 @@
 use super::model::{FCMSchedule, UpdateSchedule};
 use super::utils::{decode_cron, extract_claims};
-use crate::utils::{ApiTags, MyResponse, ResponseObject};
+use crate::utils::{ApiTags, JsonError, JsonSuccess, ResponseObject};
 use chrono::Utc;
 use poem::{web::Data, Request};
 use poem_openapi::param::Path;
@@ -34,12 +34,12 @@ impl FirebaseMessaging {
         req: &Request,
         pool: Data<&SqlitePool>,
         payload: Json<FCMSchedule>,
-    ) -> MyResponse<FCMSchedule> {
+    ) -> Result<JsonSuccess<FCMSchedule>, JsonError<String>> {
         // extract user id from token
         let data = match extract_claims(req.header("firebase-auth")) {
             Ok(data) => data,
             Err(e) => {
-                return ResponseObject::unauthorized(e);
+                return Err(ResponseObject::unauthorized(e));
             }
         };
 
@@ -47,21 +47,21 @@ impl FirebaseMessaging {
         let fb_project_id = data.aud;
 
         if !self.projects.contains(&fb_project_id) {
-            return ResponseObject::unauthorized("Invalid project id");
+            return Err(ResponseObject::unauthorized("Invalid project id"));
         }
 
         // validate payload
         match payload.payload {
             Value::Object(_) => {}
             _ => {
-                return ResponseObject::bad_request("Invalid payload");
+                return Err(ResponseObject::bad_request("Invalid payload"));
             }
         }
 
         let next_execution = match decode_cron(&payload.cron_pattern.as_ref()) {
             Ok(next) => next,
             Err(e) => {
-                return ResponseObject::bad_request(e);
+                return Err(ResponseObject::bad_request(e));
             }
         };
 
@@ -87,7 +87,7 @@ impl FirebaseMessaging {
         let result = match result {
             Ok(result) => result.last_insert_rowid(),
             Err(e) => {
-                return ResponseObject::internal_server_error(e);
+                return Err(ResponseObject::internal_server_error(e));
             }
         };
 
@@ -102,11 +102,11 @@ impl FirebaseMessaging {
         let schedule = match schedule {
             Ok(schedule) => schedule,
             Err(e) => {
-                return ResponseObject::internal_server_error(e);
+                return Err(ResponseObject::internal_server_error(e));
             }
         };
 
-        ResponseObject::created(schedule)
+        Ok(ResponseObject::created(schedule))
     }
 
     // find all schedules for the user
@@ -115,12 +115,12 @@ impl FirebaseMessaging {
         &self,
         req: &Request,
         pool: Data<&SqlitePool>,
-    ) -> MyResponse<Vec<FCMSchedule>> {
+    ) -> Result<JsonSuccess<Vec<FCMSchedule>>, JsonError<String>> {
         // extract user id from token
         let data = match extract_claims(req.header("firebase-auth")) {
             Ok(data) => data,
             Err(e) => {
-                return ResponseObject::unauthorized(e);
+                return Err(ResponseObject::unauthorized(e));
             }
         };
 
@@ -137,11 +137,11 @@ impl FirebaseMessaging {
         let schedules = match schedules {
             Ok(schedules) => schedules,
             Err(e) => {
-                return ResponseObject::internal_server_error(e);
+                return Err(ResponseObject::internal_server_error(e));
             }
         };
 
-        ResponseObject::ok(schedules)
+        Ok(ResponseObject::ok(schedules))
     }
 
     // Delete schedule by id (only if it belongs to the user)
@@ -155,12 +155,12 @@ impl FirebaseMessaging {
         req: &Request,
         pool: Data<&SqlitePool>,
         id: Path<i64>,
-    ) -> MyResponse<FCMSchedule> {
+    ) -> Result<JsonSuccess<FCMSchedule>, JsonError<String>> {
         // extract user id from token
         let data = match extract_claims(req.header("firebase-auth")) {
             Ok(data) => data,
             Err(e) => {
-                return ResponseObject::unauthorized(e);
+                return Err(ResponseObject::unauthorized(e));
             }
         };
 
@@ -178,7 +178,7 @@ impl FirebaseMessaging {
         let schedule = match schedule {
             Ok(schedule) => schedule,
             Err(_) => {
-                return ResponseObject::not_found("Schedule not found");
+                return Err(ResponseObject::not_found("Schedule not found"));
             }
         };
 
@@ -193,15 +193,15 @@ impl FirebaseMessaging {
         let result = match result {
             Ok(result) => result,
             Err(e) => {
-                return ResponseObject::internal_server_error(e);
+                return Err(ResponseObject::internal_server_error(e));
             }
         };
 
         if result.rows_affected() == 0 {
-            return ResponseObject::not_found("Schedule not found");
+            return Err(ResponseObject::not_found("Schedule not found"));
         }
 
-        ResponseObject::ok(schedule)
+        Ok(ResponseObject::ok(schedule))
     }
 
     // Update schedule by id (only if it belongs to the user)
@@ -212,12 +212,12 @@ impl FirebaseMessaging {
         pool: Data<&SqlitePool>,
         id: Path<i64>,
         payload: Json<UpdateSchedule>,
-    ) -> MyResponse<FCMSchedule> {
+    ) -> Result<JsonSuccess<FCMSchedule>, JsonError<String>> {
         // extract user id from token
         let data = match extract_claims(req.header("firebase-auth")) {
             Ok(data) => data,
             Err(e) => {
-                return ResponseObject::unauthorized(e);
+                return Err(ResponseObject::unauthorized(e));
             }
         };
 
@@ -235,21 +235,21 @@ impl FirebaseMessaging {
         let _ = match schedule {
             Ok(schedule) => schedule,
             Err(_) => {
-                return ResponseObject::not_found("Schedule not found");
+                return Err(ResponseObject::not_found("Schedule not found"));
             }
         };
 
         match payload.payload {
             Value::Object(_) => {}
             _ => {
-                return ResponseObject::bad_request("Invalid payload");
+                return Err(ResponseObject::bad_request("Invalid payload"));
             }
         }
 
         let next_execution = match decode_cron(&payload.cron_pattern) {
             Ok(next) => next,
             Err(e) => {
-                return ResponseObject::bad_request(e);
+                return Err(ResponseObject::bad_request(e));
             }
         };
 
@@ -272,12 +272,12 @@ impl FirebaseMessaging {
         let result = match result {
             Ok(result) => result,
             Err(e) => {
-                return ResponseObject::internal_server_error(e);
+                return Err(ResponseObject::internal_server_error(e));
             }
         };
 
         if result.rows_affected() == 0 {
-            return ResponseObject::not_found("Schedule not found");
+            return Err(ResponseObject::not_found("Schedule not found"));
         }
 
         let schedule = sqlx::query_as!(
@@ -292,10 +292,10 @@ impl FirebaseMessaging {
         let schedule = match schedule {
             Ok(schedule) => schedule,
             Err(e) => {
-                return ResponseObject::internal_server_error(e);
+                return Err(ResponseObject::internal_server_error(e));
             }
         };
 
-        ResponseObject::ok(schedule)
+        Ok(ResponseObject::ok(schedule))
     }
 }
