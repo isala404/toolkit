@@ -18,6 +18,7 @@ RUN cargo build --release --target x86_64-unknown-linux-musl
 FROM alpine:latest
 
 RUN apk --no-cache add ca-certificates
+RUN apk add --no-cache yt-dlp ffmpeg
 
 WORKDIR /usr/src/app
 COPY --from=build /usr/src/app/target/x86_64-unknown-linux-musl/release/toolkit .
