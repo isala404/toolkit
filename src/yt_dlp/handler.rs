@@ -172,9 +172,25 @@ impl YoutubeDL {
             }
         };
 
+        // convert to mp3 using ffmpeg command
+        match std::process::Command::new("ffmpeg")
+            .arg("-i")
+            .arg(file.path())
+            .arg(dir_path.join("audio.mp3"))
+            .output()
+        {
+            Ok(output) => output,
+            Err(error) => {
+                error!(url = %url.0, error = %error, "Failed to convert to mp3");
+                return Err(ResponseObject::internal_server_error(
+                    "Failed to convert to mp3".to_string(),
+                ));
+            }
+        };
+
         // TODO: Read this as a stream instead of reading the whole file into memory
         // read file contents as bytes
-        let file_contents = match std::fs::read(file.path()) {
+        let file_contents = match std::fs::read(dir_path.join("audio.mp3")) {
             Ok(file_contents) => file_contents,
             Err(error) => {
                 error!(url = %url.0, error = %error, "Failed to read the downloaded file");
