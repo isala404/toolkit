@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  toolkit:
+    image: ghcr.io/mrsupiri/toolkit:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./service_accounts:/usr/src/app/service_accounts
+      - ./toolkit.sqlite:/usr/src/app/toolkit.sqlite
+      - .env:/usr/src/app/.env
+    depends_on:
+      - selenium
+  selenium:
+    image: selenium/standalone-chrome:latest
+    ports:
+      - "4444:4444"
+    shm_size: '2g'

@@ -19,6 +19,8 @@ lazy_static! {
     static ref API_KEY: String = env::var("API_KEY").expect("API_KEY must be set");
     pub static ref OPENAI_API_KEY: String =
         env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY must be set");
+    pub static ref CHROME_DRIVER_ENDPOINT: String =
+        env::var("CHROME_DRIVER_ENDPOINT").expect("CHROME_DRIVER_ENDPOINT must be set");
 }
 
 #[derive(Tags)]

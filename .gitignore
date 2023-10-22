@@ -16,4 +16,4 @@ Cargo.lock
 *.pdb
 .env
 *.db*
-*/service_accounts/*
+service_accounts/*
