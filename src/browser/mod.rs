@@ -1,12 +1,11 @@
+use crate::utils;
 use thirtyfour::{DesiredCapabilities, WebDriver};
 use tokio::sync::Mutex;
-use crate::utils;
 
 mod handler;
 mod model;
 
 pub async fn selenium() -> (handler::Selenium, WebDriver) {
-
     let caps = DesiredCapabilities::chrome();
     let web_driver = match WebDriver::new(utils::CHROME_DRIVER_ENDPOINT.as_str(), caps).await {
         Ok(d) => d,

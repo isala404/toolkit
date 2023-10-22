@@ -31,6 +31,8 @@ impl Selenium {
         url: Query<String>,
         /// delay in milliseconds wait for the page to be fully loaded
         delay: Query<u64>,
+        /// whether to try to bypass paywall
+        bypass_paywall: Query<bool>,
     ) -> Result<JsonSuccess<String>, JsonError<String>> {
         let driver = self.driver.lock().await;
 
@@ -39,6 +41,11 @@ impl Selenium {
             Err(e) => {
                 return Err(ResponseObject::unauthorized(e));
             }
+        }
+
+        let mut url = url.0;
+        if bypass_paywall.0 {
+            url = format!("https://12ft.io/{}", url);
         }
 
         let driver = match self.setup_driver(&driver, url.as_str()).await {
@@ -84,6 +91,8 @@ impl Selenium {
         url: Query<String>,
         /// delay in milliseconds wait for the page to be fully loaded
         delay: Query<u64>,
+        /// whether to try to bypass paywall
+        bypass_paywall: Query<bool>,
     ) -> Result<JsonSuccess<String>, JsonError<String>> {
         let driver = self.driver.lock().await;
 
@@ -92,6 +101,11 @@ impl Selenium {
             Err(e) => {
                 return Err(ResponseObject::unauthorized(e));
             }
+        }
+
+        let mut url = url.0;
+        if bypass_paywall.0 {
+            url = format!("https://12ft.io/api/proxy?ref=&q={}", url);
         }
 
         let driver = match self.setup_driver(&driver, url.as_str()).await {
@@ -151,6 +165,8 @@ impl Selenium {
         url: Query<String>,
         /// delay in milliseconds wait for the page to be fully loaded
         delay: Query<u64>,
+        /// whether to try to bypass paywall
+        bypass_paywall: Query<bool>,
     ) -> Result<JsonSuccess<String>, JsonError<Option<String>>> {
         let driver = self.driver.lock().await;
 
@@ -159,6 +175,11 @@ impl Selenium {
             Err(e) => {
                 return Err(ResponseObject::unauthorized(e));
             }
+        }
+
+        let mut url = url.0;
+        if bypass_paywall.0 {
+            url = format!("https://12ft.io/api/proxy?ref=&q={}", url);
         }
 
         let driver = match self.setup_driver(&driver, url.as_str()).await {
@@ -209,6 +230,8 @@ impl Selenium {
         url: Query<String>,
         /// delay in milliseconds wait for the page to be fully loaded
         delay: Query<u64>,
+        /// whether to try to bypass paywall
+        bypass_paywall: Query<bool>,
     ) -> Result<JsonSuccess<Vec<Image>>, JsonError<String>> {
         let driver = self.driver.lock().await;
 
@@ -217,6 +240,11 @@ impl Selenium {
             Err(e) => {
                 return Err(ResponseObject::unauthorized(e));
             }
+        }
+
+        let mut url = url.0;
+        if bypass_paywall.0 {
+            url = format!("https://12ft.io/api/proxy?ref=&q={}", url);
         }
 
         let driver = match self.setup_driver(&driver, url.as_str()).await {
