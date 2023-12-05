@@ -137,6 +137,15 @@ pub enum JsonError<T: ParseFromJSON + ToJSON + Send + Sync> {
     InternalServerError(Json<ResponseObject<T>>),
 }
 
+impl From<anyhow::Error> for JsonError<String> {
+    fn from(err: anyhow::Error) -> Self {
+        JsonError::InternalServerError(Json(ResponseObject {
+            data: None,
+            error: Some(err.to_string()),
+        }))
+    }
+}
+
 fn bad_request_handler<T: ParseFromJSON + ToJSON + Send + Sync>(err: PoemError) -> JsonError<T> {
     if err.is::<ParseRequestPayloadError>() {
         JsonError::BadRequest(Json(ResponseObject {

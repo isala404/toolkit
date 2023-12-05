@@ -28,3 +28,7 @@ base64 = "0.21.4"
 youtube_dl = { version =  "0.9.0", features = ["tokio", "downloader-rustls-tls"] }
 lazy_static = "1.4.0"
 tempfile = "3.8.0"
+regex = "1.10.2"
+anyhow = "1.0.75"
+url = "2.5.0"
+urlencoding = "2.1.3"

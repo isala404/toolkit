@@ -1,5 +1,9 @@
-use super::model::Metadata;
+use super::{
+    model::Metadata,
+    utils::{download_instgram_video, is_instagram_url},
+};
 use crate::utils::{self, verify_apikey, ApiTags, JsonError, JsonSuccess, ResponseObject};
+use anyhow::Context;
 use poem::Request;
 use poem_openapi::{
     param::Query,
@@ -8,7 +12,7 @@ use poem_openapi::{
 };
 use std::{collections::HashMap, fs::DirEntry, path::Path};
 use tempfile::tempdir;
-use tracing::error;
+use tracing::{error, debug};
 use youtube_dl::YoutubeDl;
 
 #[derive(Default)]
@@ -30,12 +34,9 @@ impl YoutubeDL {
         req: &Request,
         url: Query<String>,
     ) -> Result<JsonSuccess<Metadata>, JsonError<String>> {
-        match verify_apikey(req).await {
-            Ok(_) => (),
-            Err(e) => {
-                return Err(ResponseObject::unauthorized(e));
-            }
-        }
+        verify_apikey(req)
+            .await
+            .map_err(|e| ResponseObject::unauthorized(e))?;
 
         let output = YoutubeDl::new(url.0.clone())
             .socket_timeout("15")
@@ -104,15 +105,9 @@ impl YoutubeDL {
 
         let dir_path = temp_dir.path();
 
-        let file = match self
+        let file = self
             ._download(url.0.clone(), format.0.clone(), dir_path)
-            .await
-        {
-            Ok(file_contents) => file_contents,
-            Err(error) => {
-                return Err(error);
-            }
-        };
+            .await?;
 
         // TODO: Read this as a stream instead of reading the whole file into memory
         // read file contents as bytes
@@ -143,12 +138,9 @@ impl YoutubeDL {
         req: &Request,
         url: Query<String>,
     ) -> Result<JsonSuccess<String>, JsonError<String>> {
-        match verify_apikey(req).await {
-            Ok(_) => (),
-            Err(e) => {
-                return Err(ResponseObject::unauthorized(e));
-            }
-        }
+        verify_apikey(req)
+            .await
+            .map_err(|e| ResponseObject::unauthorized(e))?;
 
         let temp_dir = match tempdir() {
             Ok(temp_dir) => temp_dir,
@@ -162,15 +154,9 @@ impl YoutubeDL {
 
         let dir_path = temp_dir.path();
 
-        let file = match self
+        let file = self
             ._download(url.0.clone(), "w".to_string(), dir_path)
-            .await
-        {
-            Ok(file_contents) => file_contents,
-            Err(error) => {
-                return Err(error);
-            }
-        };
+            .await?;
 
         // convert to mp3 using ffmpeg command
         match std::process::Command::new("ffmpeg")
@@ -277,7 +263,13 @@ impl YoutubeDL {
         url: String,
         format: String,
         dir_path: &Path,
-    ) -> Result<DirEntry, JsonError<String>> {
+    ) -> Result<DirEntry, anyhow::Error> {
+        // Check if the url is instagram.com
+        if is_instagram_url(&url).unwrap_or(false) {
+            debug!(url = %url, "Instagram URL detected");
+            return download_instgram_video(url, dir_path).await;
+        }
+
         let output = YoutubeDl::new(url.clone())
             .format(format)
             .output_template("%(id)s.%(ext)s")
@@ -289,11 +281,9 @@ impl YoutubeDL {
             Err(error) => {
                 error!(url = %url, error = %error, "Failed to get metadata");
                 if error.to_string().contains("ERROR: Unsupported URL") {
-                    return Err(ResponseObject::bad_request("Unsupported URL".to_string()));
+                    return Err(anyhow::anyhow!("Unsupported URL"));
                 }
-                return Err(ResponseObject::internal_server_error(
-                    "Failed to get metadata".to_string(),
-                ));
+                return Err(anyhow::anyhow!("Failed to get metadata"));
             }
         };
 
@@ -302,9 +292,7 @@ impl YoutubeDL {
             Ok(files) => files,
             Err(error) => {
                 error!(url = %url, error = %error, "Failed to get download directory");
-                return Err(ResponseObject::internal_server_error(
-                    "Failed to get download directory".to_string(),
-                ));
+                return Err(anyhow::anyhow!("Failed to get download directory"));
             }
         };
 
@@ -312,20 +300,16 @@ impl YoutubeDL {
         let file = match files.into_iter().next() {
             Some(file) => file,
             None => {
-                error!(url = %url, "Failed to get download directory");
-                return Err(ResponseObject::bad_request(
-                    "Failed to get download directory".to_string(),
-                ));
+                error!(url = %url, "No files found in download directory");
+                return Err(anyhow::anyhow!("No files found in download directory"));
             }
         };
 
         let file = match file {
             Ok(file) => file,
             Err(error) => {
-                error!(url = %url, error = %error, "Failed to get download directory");
-                return Err(ResponseObject::internal_server_error(
-                    "Failed to get download directory".to_string(),
-                ));
+                error!(url = %url, error = %error, "Failed to get downloaded file");
+                return Err(anyhow::anyhow!("Failed to get downloaded file"));
             }
         };
 
