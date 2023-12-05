@@ -163,7 +163,7 @@ impl YoutubeDL {
         let dir_path = temp_dir.path();
 
         let file = match self
-            ._download(url.0.clone(), "wa".to_string(), dir_path)
+            ._download(url.0.clone(), "w".to_string(), dir_path)
             .await
         {
             Ok(file_contents) => file_contents,

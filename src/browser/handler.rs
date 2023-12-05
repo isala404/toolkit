@@ -275,18 +275,14 @@ impl Selenium {
                 Ok(s) => s,
                 Err(e) => {
                     error!(url=?*url, error=?e, "Failed to get the src of the image");
-                    return Err(ResponseObject::internal_server_error(
-                        "Failed to get the src of the image",
-                    ));
+                    continue;
                 }
             };
             let alt = match image.attr("alt").await {
                 Ok(s) => s,
                 Err(e) => {
                     error!(url=?*url, error=?e, "Failed to get the alt of the image");
-                    return Err(ResponseObject::internal_server_error(
-                        "Failed to get the alt of the image",
-                    ));
+                    None
                 }
             };
 
@@ -298,9 +294,7 @@ impl Selenium {
                 Ok(r) => r.width,
                 Err(e) => {
                     error!(url=?*url, error=?e, "Failed to get the width of the image");
-                    return Err(ResponseObject::internal_server_error(
-                        "Failed to get the width of the image",
-                    ));
+                    continue;
                 }
             };
 
@@ -308,9 +302,7 @@ impl Selenium {
                 Ok(r) => r.height,
                 Err(e) => {
                     error!(url=?*url, error=?e, "Failed to get the height of the image");
-                    return Err(ResponseObject::internal_server_error(
-                        "Failed to get the height of the image",
-                    ));
+                    continue;
                 }
             };
             images_vec.push(Image {
