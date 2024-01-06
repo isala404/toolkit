@@ -14,7 +14,7 @@ services:
     restart: always
   selenium:
     image: selenium/standalone-chrome:latest
-    ports:
-      - "4444:4444"
     shm_size: '2g'
     restart: always
+    environment:
+      - SE_NODE_SESSION_TIMEOUT=2147483646

@@ -8,7 +8,7 @@ use poem::{
 };
 use poem_openapi::OpenApiService;
 use tokio::time::Duration;
-use tracing::Level;
+use tracing_subscriber::{fmt, prelude::*, EnvFilter};
 use utils::get_db_pool;
 
 mod browser;
@@ -19,10 +19,12 @@ mod yt_dlp;
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
-    tracing_subscriber::fmt()
-        .with_max_level(Level::DEBUG)
-        .init();
     dotenv().ok(); // This line loads the environment variables from the ".env" file.
+    tracing_subscriber::registry()
+        .with(fmt::layer())
+        .with(EnvFilter::from_env("RUST_LOG"))
+        .init();
+    
     let pool = get_db_pool().await;
     let hostname = utils::get_host();
     let port = utils::get_port();

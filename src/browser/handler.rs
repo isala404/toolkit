@@ -1,3 +1,5 @@
+use std::{thread, time::Duration, process};
+
 use super::model::Image;
 use crate::utils::{verify_apikey, ApiTags, JsonError, JsonSuccess, ResponseObject};
 use base64::{engine::general_purpose, Engine as _};
@@ -5,7 +7,7 @@ use poem::{Request, Result};
 use poem_openapi::{param::Query, OpenApi};
 use thirtyfour::prelude::*;
 use tokio::sync::{Mutex, MutexGuard};
-use tracing::error;
+use tracing::{error, info};
 
 pub struct Selenium {
     driver: Mutex<WebDriver>,
@@ -339,6 +341,11 @@ impl Selenium {
             Ok(t) => t,
             Err(e) => {
                 error!(url=?*url, error=?e, "Failed to create new tab");
+                thread::spawn(|| {
+                    thread::sleep(Duration::from_secs(1));
+                    info!("triggering restart to regain access to the browser");
+                    process::exit(-1);
+                });
                 return Err("Failed to create new tab".to_string());
             }
         };
