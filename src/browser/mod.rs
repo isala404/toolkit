@@ -1,5 +1,5 @@
 use crate::utils;
-use thirtyfour::{DesiredCapabilities, WebDriver};
+use thirtyfour::{ChromiumLikeCapabilities, DesiredCapabilities, WebDriver};
 use tokio::sync::Mutex;
 
 mod handler;

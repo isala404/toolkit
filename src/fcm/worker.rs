@@ -5,7 +5,7 @@ use gcp_auth::{AuthenticationManager, CustomServiceAccount, Error};
 use reqwest::header::{HeaderMap, AUTHORIZATION};
 use serde::{Deserialize, Serialize};
 use serde_json::{from_str, Value};
-use sqlx::SqlitePool;
+use sqlx::postgres::PgPool;
 use std::{collections::HashMap, fs, path::PathBuf, time::Duration};
 use tokio::time::sleep;
 use tracing::{debug, error, info, warn};
@@ -59,7 +59,8 @@ pub async fn read_in_serivce_accounts() -> Result<HashMap<String, Authentication
 
             let credentials_path = PathBuf::from(file_path);
             let service_account = CustomServiceAccount::from_file(credentials_path)?;
-            let authentication_manager = AuthenticationManager::from(service_account);
+            let authentication_manager = AuthenticationManager::try_from(service_account)
+                .expect("Error creating authentication manager");
             let project_name = authentication_manager.project_id().await?;
             service_accounts.insert(project_name, authentication_manager);
         }
@@ -70,14 +71,14 @@ pub async fn read_in_serivce_accounts() -> Result<HashMap<String, Authentication
 
 pub async fn run_every_minute(
     auth_managers: HashMap<String, AuthenticationManager>,
-    pool: &SqlitePool,
+    pool: &PgPool,
 ) {
     loop {
         let current_time = Utc::now().naive_local();
 
         let messages = sqlx::query_as!(
             FCMSchedule,
-            "SELECT * FROM fcm_schedule WHERE next_execution < datetime('now')"
+            "SELECT * FROM fcm_schedule WHERE next_execution < NOW()"
         )
         .fetch_all(pool)
         .await
@@ -188,7 +189,7 @@ pub async fn run_every_minute(
 
             // Update database
             let result = sqlx::query!(
-                r#"UPDATE fcm_schedule SET next_execution = ?, last_execution = ?, updated_at = ? WHERE id = ?"#,
+                r#"UPDATE fcm_schedule SET next_execution = $1, last_execution = $2, updated_at = $3 WHERE id = $4"#,
                 next,
                 current_time,
                 current_time,

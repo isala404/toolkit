@@ -6,7 +6,7 @@ use poem::{web::Data, Request};
 use poem_openapi::param::Path;
 use poem_openapi::{payload::Json, OpenApi};
 use serde_json::Value;
-use sqlx::SqlitePool;
+use sqlx::postgres::PgPool;
 
 pub struct FirebaseMessaging {
     pub projects: Vec<String>,
@@ -32,7 +32,7 @@ impl FirebaseMessaging {
     async fn create_schedule(
         &self,
         req: &Request,
-        pool: Data<&SqlitePool>,
+        pool: Data<&PgPool>,
         payload: Json<FCMSchedule>,
     ) -> Result<JsonSuccess<FCMSchedule>, JsonError<String>> {
         // extract user id from token
@@ -67,11 +67,13 @@ impl FirebaseMessaging {
 
         let current_time = Utc::now().naive_local();
 
-        let result = sqlx::query!(
+        let schedule = sqlx::query_as!(
+            FCMSchedule,
             "INSERT INTO fcm_schedule (
                 name, fb_user_id, push_token, fb_project_id, cron_pattern, payload, last_execution, next_execution, created_at, updated_at
             ) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            RETURNING *",
             payload.name,
             fb_user_id,
             payload.push_token,
@@ -82,19 +84,6 @@ impl FirebaseMessaging {
             next_execution,
             current_time,
             current_time
-        ).execute(pool.0).await;
-
-        let result = match result {
-            Ok(result) => result.last_insert_rowid(),
-            Err(e) => {
-                return Err(ResponseObject::internal_server_error(e));
-            }
-        };
-
-        let schedule = sqlx::query_as!(
-            FCMSchedule,
-            "SELECT * FROM fcm_schedule WHERE id = ?",
-            result
         )
         .fetch_one(pool.0)
         .await;
@@ -114,7 +103,7 @@ impl FirebaseMessaging {
     async fn find_all_schedules(
         &self,
         req: &Request,
-        pool: Data<&SqlitePool>,
+        pool: Data<&PgPool>,
     ) -> Result<JsonSuccess<Vec<FCMSchedule>>, JsonError<String>> {
         // extract user id from token
         let data = match extract_claims(req.header("firebase-auth")) {
@@ -128,7 +117,7 @@ impl FirebaseMessaging {
 
         let schedules = sqlx::query_as!(
             FCMSchedule,
-            "SELECT * FROM fcm_schedule WHERE fb_user_id = ?",
+            "SELECT * FROM fcm_schedule WHERE fb_user_id = $1",
             fb_user_id
         )
         .fetch_all(pool.0)
@@ -153,8 +142,8 @@ impl FirebaseMessaging {
     async fn delete_schedule(
         &self,
         req: &Request,
-        pool: Data<&SqlitePool>,
-        id: Path<i64>,
+        pool: Data<&PgPool>,
+        id: Path<i32>,
     ) -> Result<JsonSuccess<FCMSchedule>, JsonError<String>> {
         // extract user id from token
         let data = match extract_claims(req.header("firebase-auth")) {
@@ -168,7 +157,7 @@ impl FirebaseMessaging {
 
         let schedule = sqlx::query_as!(
             FCMSchedule,
-            "SELECT * FROM fcm_schedule WHERE id = ? AND fb_user_id = ?",
+            "SELECT * FROM fcm_schedule WHERE id = $1 AND fb_user_id = $2",
             id.0,
             fb_user_id
         )
@@ -183,7 +172,7 @@ impl FirebaseMessaging {
         };
 
         let result = sqlx::query!(
-            "DELETE FROM fcm_schedule WHERE id = ? AND fb_user_id = ?",
+            "DELETE FROM fcm_schedule WHERE id = $1 AND fb_user_id = $2",
             id.0,
             fb_user_id
         )
@@ -209,8 +198,8 @@ impl FirebaseMessaging {
     async fn update_schedule(
         &self,
         req: &Request,
-        pool: Data<&SqlitePool>,
-        id: Path<i64>,
+        pool: Data<&PgPool>,
+        id: Path<i32>,
         payload: Json<UpdateSchedule>,
     ) -> Result<JsonSuccess<FCMSchedule>, JsonError<String>> {
         // extract user id from token
@@ -225,7 +214,7 @@ impl FirebaseMessaging {
 
         let schedule = sqlx::query_as!(
             FCMSchedule,
-            "SELECT * FROM fcm_schedule WHERE id = ? AND fb_user_id = ?",
+            "SELECT * FROM fcm_schedule WHERE id = $1 AND fb_user_id = $2",
             id.0,
             fb_user_id
         )
@@ -256,7 +245,7 @@ impl FirebaseMessaging {
         let current_time = Utc::now().naive_local();
 
         let result = sqlx::query!(
-            "UPDATE fcm_schedule SET name = ?, push_token = ?, cron_pattern = ?, payload = ?, next_execution = ?, updated_at = ? WHERE id = ? AND fb_user_id = ?",
+            "UPDATE fcm_schedule SET name = $1, push_token = $2, cron_pattern = $3, payload = $4, next_execution = $5, updated_at = $6 WHERE id = $7 AND fb_user_id = $8",
             payload.name,
             payload.push_token,
             payload.cron_pattern,
@@ -282,7 +271,7 @@ impl FirebaseMessaging {
 
         let schedule = sqlx::query_as!(
             FCMSchedule,
-            "SELECT * FROM fcm_schedule WHERE id = ? AND fb_user_id = ?",
+            "SELECT * FROM fcm_schedule WHERE id = $1 AND fb_user_id = $2",
             id.0,
             fb_user_id
         )

@@ -11,7 +11,7 @@ use poem_openapi::{
 };
 use std::{collections::HashMap, fs::DirEntry, path::Path};
 use tempfile::tempdir;
-use tracing::{error, debug};
+use tracing::{debug, error};
 use youtube_dl::YoutubeDl;
 
 #[derive(Default)]

@@ -5,8 +5,8 @@ use reqwest::{
     Client,
 };
 use serde_json::Value;
-use tracing::debug;
 use std::{fs::DirEntry, io, path::Path};
+use tracing::debug;
 use url::Url;
 
 pub async fn download_instgram_video(
@@ -15,7 +15,6 @@ pub async fn download_instgram_video(
 ) -> Result<DirEntry, anyhow::Error> {
     let post_id = get_post_id(&url)?;
     debug!("Post ID: {}", post_id);
-
 
     let mut headers = HeaderMap::new();
     headers.insert("Accept", HeaderValue::from_static("*/*"));
@@ -65,7 +64,7 @@ pub async fn download_instgram_video(
         if !is_video {
             return Err(anyhow::anyhow!("Only instagram reels are supported"));
         }
-        
+
         let video_url = response_data["data"]["xdt_shortcode_media"]["video_url"]
             .as_str()
             .context("Failed to get video URL")?;

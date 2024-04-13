@@ -21,7 +21,7 @@ fn name_example() -> String {
 pub struct FCMSchedule {
     #[oai(read_only)]
     /// ID of the schedule
-    pub id: i64,
+    pub id: i32,
 
     #[oai(validator(min_length = 3, max_length = 64), default = "name_example")]
     /// Friendly name of the schedule

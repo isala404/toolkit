@@ -1,11 +1,11 @@
-use sqlx::SqlitePool;
+use sqlx::postgres::PgPool;
 
 mod handler;
 mod model;
 mod utils;
 mod worker;
 
-pub async fn fcm_api(pool: SqlitePool) -> handler::FirebaseMessaging {
+pub async fn fcm_api(pool: PgPool) -> handler::FirebaseMessaging {
     let service_accounts = worker::read_in_serivce_accounts().await.unwrap();
 
     let fcm_api = handler::FirebaseMessaging::new(service_accounts.keys().cloned().collect());

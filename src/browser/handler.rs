@@ -1,4 +1,4 @@
-use std::{thread, time::Duration, process};
+use std::{process, thread, time::Duration};
 
 use super::model::Image;
 use crate::utils::{verify_apikey, ApiTags, JsonError, JsonSuccess, ResponseObject};

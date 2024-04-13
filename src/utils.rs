@@ -11,9 +11,8 @@ use poem_openapi::{
     types::{ParseFromJSON, ToJSON},
     {ApiResponse, Object, Tags},
 };
-use sqlx::{sqlite::SqliteConnectOptions, Error, SqlitePool};
+use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::env;
-use std::{future::Future, path::Path};
 
 lazy_static! {
     static ref API_KEY: String = env::var("API_KEY").expect("API_KEY must be set");
@@ -35,23 +34,14 @@ pub enum ApiTags {
     YoutubeDL,
 }
 
-async fn connect(filename: impl AsRef<Path>) -> impl Future<Output = Result<SqlitePool, Error>> {
-    let filename = filename
-        .as_ref()
-        .to_str()
-        .unwrap()
-        .trim_start_matches("sqlite:");
 
-    let options = SqliteConnectOptions::new()
-        .filename(filename)
-        .create_if_missing(true);
-
-    SqlitePool::connect_with(options)
-}
-
-pub async fn get_db_pool() -> SqlitePool {
+pub async fn get_db_pool() -> PgPool {
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let pool = connect(database_url).await.await.unwrap();
+    let pool = PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&database_url)
+        .await
+        .expect("Failed to connect to Postgres");
     sqlx::migrate!().run(&pool).await.unwrap();
     return pool;
 }
@@ -193,7 +183,6 @@ pub struct BasicAuthEndpoint<E> {
     password: String,
 }
 
-#[poem::async_trait]
 impl<E: Endpoint> Endpoint for BasicAuthEndpoint<E> {
     type Output = E::Output;
 

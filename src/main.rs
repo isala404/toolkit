@@ -24,7 +24,7 @@ async fn main() -> Result<(), std::io::Error> {
         .with(fmt::layer())
         .with(EnvFilter::from_env("RUST_LOG"))
         .init();
-    
+
     let pool = get_db_pool().await;
     let hostname = utils::get_host();
     let port = utils::get_port();
