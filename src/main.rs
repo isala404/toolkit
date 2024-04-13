@@ -30,9 +30,11 @@ async fn main() -> Result<(), std::io::Error> {
     let port = utils::get_port();
 
     let fcm_api = fcm_api(pool.clone()).await;
-    let health_api = health::health_checks(pool.clone()).await;
+
     let (browser_api, driver) = browser::selenium().await;
     let yt_dlp_api = yt_dlp::yt_dlp().await;
+
+    let health_api = health::health_checks(pool.clone(), browser_api.clone()).await;
 
     let api_service = OpenApiService::new(
         (fcm_api, browser_api, health_api, yt_dlp_api),

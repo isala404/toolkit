@@ -1,16 +1,17 @@
-use std::{process, thread, time::Duration};
-
+#[deny(clippy::all)]
 use super::model::Image;
 use crate::utils::{verify_apikey, ApiTags, JsonError, JsonSuccess, ResponseObject};
 use base64::{engine::general_purpose, Engine as _};
 use poem::{Request, Result};
 use poem_openapi::{param::Query, OpenApi};
+use std::sync::Arc;
 use thirtyfour::prelude::*;
 use tokio::sync::{Mutex, MutexGuard};
-use tracing::{error, info};
+use tracing::error;
 
+#[derive(Clone)]
 pub struct Selenium {
-    driver: Mutex<WebDriver>,
+    driver: Arc<Mutex<WebDriver>>,
 }
 
 #[OpenApi(
@@ -20,7 +21,7 @@ pub struct Selenium {
 )]
 impl Selenium {
     // create new instance
-    pub fn new(driver: Mutex<WebDriver>) -> Self {
+    pub fn new(driver: Arc<Mutex<WebDriver>>) -> Self {
         Selenium { driver }
     }
 
@@ -341,11 +342,6 @@ impl Selenium {
             Ok(t) => t,
             Err(e) => {
                 error!(url=?*url, error=?e, "Failed to create new tab");
-                thread::spawn(|| {
-                    thread::sleep(Duration::from_secs(1));
-                    info!("triggering restart to regain access to the browser");
-                    process::exit(-1);
-                });
                 return Err("Failed to create new tab".to_string());
             }
         };
@@ -417,5 +413,35 @@ impl Selenium {
                 return Err("Failed to switch to window".to_string());
             }
         }
+    }
+
+    pub async fn health(&self) -> anyhow::Result<(), anyhow::Error> {
+        let driver = self.driver.lock().await;
+
+        let driver = match self.setup_driver(&driver, "https://example.com").await {
+            Ok(d) => d,
+            Err(e) => {
+                error!(error=?e, "Failed to setup driver");
+                return Err(anyhow::anyhow!("Failed to setup driver: {}", e));
+            }
+        };
+
+        match driver.source().await {
+            Ok(h) => h,
+            Err(e) => {
+                error!(error=?e, "Failed to get page source");
+                return Err(anyhow::anyhow!("Failed to get page source: {}", e));
+            }
+        };
+
+        match self.cleanup_driver(driver, "https://example.com").await {
+            Ok(_) => (),
+            Err(e) => {
+                error!(error=?e, "Failed to cleanup driver");
+                return Err(anyhow::anyhow!("Failed to cleanup driver: {}", e));
+            }
+        }
+
+        return Ok(());
     }
 }

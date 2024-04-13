@@ -1,8 +1,9 @@
 use crate::utils;
+use std::sync::Arc;
 use thirtyfour::{ChromiumLikeCapabilities, DesiredCapabilities, WebDriver};
 use tokio::sync::Mutex;
 
-mod handler;
+pub mod handler;
 mod model;
 
 pub async fn selenium() -> (handler::Selenium, WebDriver) {
@@ -20,7 +21,7 @@ pub async fn selenium() -> (handler::Selenium, WebDriver) {
         }
     };
 
-    let driver = Mutex::new(web_driver.clone());
+    let driver = Arc::new(Mutex::new(web_driver.clone()));
     let selenium_api = handler::Selenium::new(driver);
 
     return (selenium_api, web_driver);
