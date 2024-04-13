@@ -14,5 +14,5 @@ pub async fn fcm_api(pool: PgPool) -> handler::FirebaseMessaging {
         worker::run_every_minute(service_accounts, &pool).await;
     });
 
-    return fcm_api;
+    fcm_api
 }

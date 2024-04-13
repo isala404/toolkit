@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM fcm_schedule WHERE id = $1 AND fb_user_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7d2d069ec5375b79d5edc552abd028293044f08cc3289a37a7ca2bd2d111af16"
+}

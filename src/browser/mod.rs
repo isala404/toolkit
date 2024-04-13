@@ -24,5 +24,5 @@ pub async fn selenium() -> (handler::Selenium, WebDriver) {
     let driver = Arc::new(Mutex::new(web_driver.clone()));
     let selenium_api = handler::Selenium::new(driver);
 
-    return (selenium_api, web_driver);
+    (selenium_api, web_driver)
 }

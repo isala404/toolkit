@@ -8,9 +8,7 @@ RUN apt-get update && apt-get install -y musl-tools pkg-config libssl-dev
 RUN rustup target add x86_64-unknown-linux-musl
 
 # Setup sqlx
-RUN cargo install sqlx-cli
-RUN sqlx db setup --database-url=sqlite:toolkit.db
-ENV DATABASE_URL=sqlite:toolkit.db
+ENV SQLX_OFFLINE=true
 
 RUN cargo build --release --target x86_64-unknown-linux-musl
 

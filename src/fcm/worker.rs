@@ -6,13 +6,13 @@ use reqwest::header::{HeaderMap, AUTHORIZATION};
 use serde::{Deserialize, Serialize};
 use serde_json::{from_str, Value};
 use sqlx::postgres::PgPool;
-use std::{collections::HashMap, fs, path::PathBuf, time::Duration};
+use std::{collections::HashMap, fs, time::Duration};
 use tokio::time::sleep;
 use tracing::{debug, error, info, warn};
 
 // https://firebase.google.com/docs/cloud-messaging/concept-options#notification-messages-with-optional-data-payload
 #[derive(Debug, Serialize, Deserialize)]
-struct FCM {
+struct Fcm {
     message: FCMBody,
 }
 
@@ -57,7 +57,7 @@ pub async fn read_in_serivce_accounts() -> Result<HashMap<String, Authentication
             // Do something with the file
             debug!(file_path = ?file_path, "Found service account file");
 
-            let credentials_path = PathBuf::from(file_path);
+            let credentials_path = file_path;
             let service_account = CustomServiceAccount::from_file(credentials_path)?;
             let authentication_manager = AuthenticationManager::try_from(service_account)
                 .expect("Error creating authentication manager");
@@ -128,7 +128,7 @@ pub async fn run_every_minute(
                 body: payload.remove("body"),
             };
 
-            let firebase_message = FCM {
+            let firebase_message = Fcm {
                 message: FCMBody {
                     notification,
                     data: payload,

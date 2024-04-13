@@ -29,7 +29,7 @@ pub fn extract_claims(token: Option<&str>) -> Result<Claims, String> {
     let mut validation = Validation::new(Algorithm::HS256);
     validation.insecure_disable_signature_validation();
 
-    match decode::<Claims>(&token, &key, &validation) {
+    match decode::<Claims>(token, &key, &validation) {
         Ok(data) => Ok(data.claims), // Return the data in the Ok variant
         Err(_) => Err("invalid token".to_string()),
     }

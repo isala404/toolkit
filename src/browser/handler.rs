@@ -1,4 +1,3 @@
-#[deny(clippy::all)]
 use super::model::Image;
 use crate::utils::{verify_apikey, ApiTags, JsonError, JsonSuccess, ResponseObject};
 use base64::{engine::general_purpose, Engine as _};
@@ -82,7 +81,7 @@ impl Selenium {
             }
         }
 
-        return Ok(ResponseObject::ok(html));
+        Ok(ResponseObject::ok(html))
     }
 
     /// get body text of the rendered page
@@ -152,7 +151,7 @@ impl Selenium {
             }
         }
 
-        return Ok(ResponseObject::ok(text));
+        Ok(ResponseObject::ok(text))
     }
 
     /// get screenshot of the rendered page
@@ -217,7 +216,7 @@ impl Selenium {
             }
         }
 
-        return Ok(ResponseObject::ok(format!("data:image/png;base64,{}", b64)));
+        Ok(ResponseObject::ok(format!("data:image/png;base64,{}", b64)))
     }
 
     /// get list of images in the rendered page
@@ -330,7 +329,7 @@ impl Selenium {
         // sort images by size
         images_vec.sort_by(|a, b| b.size.partial_cmp(&a.size).unwrap());
 
-        return Ok(ResponseObject::ok(images_vec));
+        Ok(ResponseObject::ok(images_vec))
     }
 
     async fn setup_driver<'a>(
@@ -365,12 +364,9 @@ impl Selenium {
         }
 
         // Wait for page to be loaded.
-        match driver.find(By::Tag("img")).await {
-            Ok(_) => (),
-            Err(_) => (),
-        }
+        let _ = driver.find(By::Tag("img")).await;
 
-        return Ok(driver);
+        Ok(driver)
     }
 
     async fn cleanup_driver<'a>(
@@ -406,11 +402,11 @@ impl Selenium {
 
         match driver.switch_to_window(handle).await {
             Ok(_) => {
-                return Ok(());
+                Ok(())
             }
             Err(e) => {
                 error!(url=?*url, error=?e, "Failed to switch to window");
-                return Err("Failed to switch to window".to_string());
+                Err("Failed to switch to window".to_string())
             }
         }
     }
@@ -442,6 +438,6 @@ impl Selenium {
             }
         }
 
-        return Ok(());
+        Ok(())
     }
 }

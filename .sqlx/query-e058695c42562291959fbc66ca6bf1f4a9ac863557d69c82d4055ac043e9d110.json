@@ -1,0 +1,91 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO fcm_schedule (\n                name, fb_user_id, push_token, fb_project_id, cron_pattern, payload, last_execution, next_execution, created_at, updated_at\n            ) \n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)\n            RETURNING *",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "fb_user_id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "fb_project_id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "push_token",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "cron_pattern",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "payload",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 7,
+        "name": "last_execution",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 8,
+        "name": "next_execution",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 9,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 10,
+        "name": "updated_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Jsonb",
+        "Timestamp",
+        "Timestamp",
+        "Timestamp",
+        "Timestamp"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "e058695c42562291959fbc66ca6bf1f4a9ac863557d69c82d4055ac043e9d110"
+}

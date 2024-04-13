@@ -6,7 +6,6 @@ on:
       - main
 
 env:
-  IMAGE_NAME: ghcr.io/mrsupiri/toolkit
   DOCKER_BUILDKIT: 1
 
 jobs:
@@ -23,6 +22,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - run: docker build -t $IMAGE_NAME:latest .
-      - run: docker tag $IMAGE_NAME:latest $IMAGE_NAME:commit-${GITHUB_SHA:0:8}
-      - run: docker push $IMAGE_NAME --all-tags
+      - run: docker build -t ghcr.io/${GITHUB_REPOSITORY}:latest .
+      - run: docker tag ghcr.io/${GITHUB_REPOSITORY}:latest ghcr.io/${GITHUB_REPOSITORY}:commit-${GITHUB_SHA:0:8}
+      - run: docker push ghcr.io/${GITHUB_REPOSITORY} --all-tags

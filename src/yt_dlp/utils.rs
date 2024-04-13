@@ -82,7 +82,7 @@ pub async fn download_instgram_video(
             .context("Failed to get video file")??;
         Ok(video_file)
     } else {
-        return Err(anyhow::anyhow!("Failed to get video URL"));
+        Err(anyhow::anyhow!("Failed to get video URL"))
     }
 }
 

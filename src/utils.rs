@@ -42,17 +42,17 @@ pub async fn get_db_pool() -> PgPool {
         .await
         .expect("Failed to connect to Postgres");
     sqlx::migrate!().run(&pool).await.unwrap();
-    return pool;
+    pool
 }
 
 pub fn get_host() -> String {
-    let host = env::var("HOST").expect("HOST must be set");
-    return host;
+    
+    env::var("HOST").expect("HOST must be set")
 }
 
 pub fn get_port() -> String {
-    let port = env::var("PORT").unwrap_or("3000".to_string());
-    return port;
+    
+    env::var("PORT").unwrap_or("3000".to_string())
 }
 
 #[derive(Object)]
@@ -213,5 +213,5 @@ pub async fn verify_apikey(req: &Request) -> Result<(), String> {
         return Err("Invalid API-Key".to_string());
     }
 
-    return Ok(());
+    Ok(())
 }

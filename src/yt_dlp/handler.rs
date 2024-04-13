@@ -35,7 +35,7 @@ impl YoutubeDL {
     ) -> Result<JsonSuccess<Metadata>, JsonError<String>> {
         verify_apikey(req)
             .await
-            .map_err(|e| ResponseObject::unauthorized(e))?;
+            .map_err(ResponseObject::unauthorized)?;
 
         let output = YoutubeDl::new(url.0.clone())
             .socket_timeout("15")
@@ -139,7 +139,7 @@ impl YoutubeDL {
     ) -> Result<JsonSuccess<String>, JsonError<String>> {
         verify_apikey(req)
             .await
-            .map_err(|e| ResponseObject::unauthorized(e))?;
+            .map_err(ResponseObject::unauthorized)?;
 
         let temp_dir = match tempdir() {
             Ok(temp_dir) => temp_dir,
@@ -198,7 +198,7 @@ impl YoutubeDL {
         let mut headers = reqwest::header::HeaderMap::new();
         headers.insert(
             "Authorization",
-            format!("Bearer {}", utils::OPENAI_API_KEY.to_string())
+            format!("Bearer {}", utils::OPENAI_API_KEY.as_str())
                 .parse()
                 .unwrap(),
         );

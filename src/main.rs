@@ -1,4 +1,4 @@
-#[deny(clippy::all)]
+#![deny(clippy::all)]
 use dotenv::dotenv;
 use fcm::fcm_api;
 use poem::{

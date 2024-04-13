@@ -58,7 +58,7 @@ impl FirebaseMessaging {
             }
         }
 
-        let next_execution = match decode_cron(&payload.cron_pattern.as_ref()) {
+        let next_execution = match decode_cron(payload.cron_pattern.as_ref()) {
             Ok(next) => next,
             Err(e) => {
                 return Err(ResponseObject::bad_request(e));

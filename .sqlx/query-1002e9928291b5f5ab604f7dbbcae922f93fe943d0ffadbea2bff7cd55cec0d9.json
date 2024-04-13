@@ -1,0 +1,80 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT * FROM fcm_schedule WHERE next_execution < NOW()",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "fb_user_id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "fb_project_id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "push_token",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "cron_pattern",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "payload",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 7,
+        "name": "last_execution",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 8,
+        "name": "next_execution",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 9,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 10,
+        "name": "updated_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "1002e9928291b5f5ab604f7dbbcae922f93fe943d0ffadbea2bff7cd55cec0d9"
+}
